@@ -39,8 +39,7 @@ spring:
             max-tokens: 1024
             temperature: 0.3    # Low temp for factual support answers
 
-    # Titan Embeddings V2 for semantic cache
-    bedrock-converse:
+      # Titan Embeddings V2 for semantic cache
       titan:
         embedding:
           model-id: amazon.titan-embed-text-v2:0
