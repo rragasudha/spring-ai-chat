@@ -1,5 +1,10 @@
 package com.captain.springaichat.config;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.ai.bedrock.titan.api.TitanEmbeddingBedrockApi;
+import org.springframework.ai.model.bedrock.autoconfigure.BedrockAwsConnectionProperties;
+import org.springframework.ai.model.bedrock.titan.autoconfigure.BedrockTitanEmbeddingProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
@@ -18,14 +23,6 @@ import java.util.stream.Collectors;
 @Configuration
 public class BedrockRuntimeConfig {
 
-    /**
-     * Provides a custom BedrockRuntimeClient with an interceptor that strips null
-     * entries from additionalModelRequestFields before the request reaches Bedrock.
-     *
-     * Spring AI 1.0.0 serialises all ChatOptions fields (including frequencyPenalty
-     * and presencePenalty) into additionalModelRequestFields without filtering nulls.
-     * Nova Micro rejects these two unknown null fields with "2 schema violations".
-     */
     @Bean
     public BedrockRuntimeClient bedrockRuntimeClient(
             AwsCredentialsProvider credentialsProvider,
@@ -35,6 +32,30 @@ public class BedrockRuntimeConfig {
                 .region(regionProvider.getRegion())
                 .overrideConfiguration(c -> c.addExecutionInterceptor(new StripNullAdditionalFieldsInterceptor()))
                 .build();
+    }
+
+    /**
+     * Spring AI 1.0.0 uses ModelOptionsUtils.OBJECT_MAPPER (no NON_NULL inclusion), so
+     * TitanEmbeddingRequest serialises both inputText and inputImage even when inputImage
+     * is null. Titan Embed Text V2 rejects the unknown inputImage field with schema
+     * violations. Providing this bean overrides the @ConditionalOnMissingBean in
+     * BedrockTitanEmbeddingAutoConfiguration, using a NON_NULL ObjectMapper copy instead.
+     */
+    @Bean
+    public TitanEmbeddingBedrockApi titanEmbeddingBedrockApi(
+            AwsCredentialsProvider credentialsProvider,
+            AwsRegionProvider regionProvider,
+            BedrockTitanEmbeddingProperties embeddingProperties,
+            BedrockAwsConnectionProperties connectionProperties,
+            ObjectMapper objectMapper) {
+        ObjectMapper nonNullMapper = objectMapper.copy()
+                .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        return new TitanEmbeddingBedrockApi(
+                embeddingProperties.getModel(),
+                credentialsProvider,
+                regionProvider.getRegion(),
+                nonNullMapper,
+                connectionProperties.getTimeout());
     }
 
     static class StripNullAdditionalFieldsInterceptor implements ExecutionInterceptor {
