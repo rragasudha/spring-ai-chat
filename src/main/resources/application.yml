@@ -29,18 +29,19 @@ spring:
   # Spring AI — model provider selection
   ai:
     model:
+      chat: bedrock-converse
       embedding: bedrock-titan
 
     bedrock:
       aws:
         region: ${AWS_REGION:us-east-1}
-      nova:
+
+      converse:
         chat:
-          model-id: amazon.nova-micro-v1:0
-          enabled: true
           options:
+            model: amazon.nova-micro-v1:0
             max-tokens: 1024
-            temperature: 0.3    # Low temp for factual support answers
+            temperature: 0.3
 
       # Titan Embeddings V2 for semantic cache
       titan:
