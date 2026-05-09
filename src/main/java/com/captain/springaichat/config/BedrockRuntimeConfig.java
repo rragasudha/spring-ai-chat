@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.ai.bedrock.titan.api.TitanEmbeddingBedrockApi;
 import org.springframework.ai.model.bedrock.autoconfigure.BedrockAwsConnectionProperties;
 import org.springframework.ai.model.bedrock.titan.autoconfigure.BedrockTitanEmbeddingProperties;
+import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
@@ -35,11 +36,9 @@ public class BedrockRuntimeConfig {
     }
 
     /**
-     * Spring AI 1.0.0 uses ModelOptionsUtils.OBJECT_MAPPER (no NON_NULL inclusion), so
-     * TitanEmbeddingRequest serialises both inputText and inputImage even when inputImage
-     * is null. Titan Embed Text V2 rejects the unknown inputImage field with schema
-     * violations. Providing this bean overrides the @ConditionalOnMissingBean in
-     * BedrockTitanEmbeddingAutoConfiguration, using a NON_NULL ObjectMapper copy instead.
+     * Bean override: gives TitanEmbeddingBedrockApi a NON_NULL ObjectMapper so that
+     * the null inputImage field is excluded from text embedding requests.
+     * Acts as @ConditionalOnMissingBean override for BedrockTitanEmbeddingAutoConfiguration.
      */
     @Bean
     public TitanEmbeddingBedrockApi titanEmbeddingBedrockApi(
@@ -57,6 +56,24 @@ public class BedrockRuntimeConfig {
                 nonNullMapper,
                 connectionProperties.getTimeout());
     }
+
+    /**
+     * Safety net: adds a Jackson MixIn to the Spring Boot ObjectMapper so that
+     * TitanEmbeddingRequest.inputImage is never serialised as null, regardless of
+     * which TitanEmbeddingBedrockApi bean instance is ultimately used.
+     * Spring AI 1.0.0 serialises TitanEmbeddingRequest (record with inputText +
+     * inputImage) without filtering nulls; Titan Embed Text V2 rejects inputImage:null
+     * with "2 schema violations".
+     */
+    @Bean
+    public Jackson2ObjectMapperBuilderCustomizer titanEmbeddingNonNullMixIn() {
+        return builder -> builder.mixIn(
+                TitanEmbeddingBedrockApi.TitanEmbeddingRequest.class,
+                TitanEmbeddingRequestNonNullMixin.class);
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    abstract static class TitanEmbeddingRequestNonNullMixin {}
 
     static class StripNullAdditionalFieldsInterceptor implements ExecutionInterceptor {
 
