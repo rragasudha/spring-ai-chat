@@ -94,10 +94,16 @@
             <artifactId>spring-ai-autoconfigure-model-chat-memory-repository-jdbc</artifactId>
         </dependency>
 
-        <!-- Redis client (for cache stats counters) -->
+        <!-- Redis client (for cache stats counters) — Jedis required by Spring AI Redis VectorStore -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.lettuce</groupId>
+                    <artifactId>lettuce-core</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- Test -->

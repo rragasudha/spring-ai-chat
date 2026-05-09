@@ -49,6 +49,7 @@ spring:
 
     # Redis Vector Store — stores embeddings for semantic cache
     vectorstore:
+      type: redis
       redis:
         index: semantic-cache-idx
         prefix: "cache:"
