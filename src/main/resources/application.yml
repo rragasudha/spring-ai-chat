@@ -45,7 +45,7 @@ spring:
       # Titan Embeddings V2 for semantic cache
       titan:
         embedding:
-          model-id: amazon.titan-embed-text-v2:0
+          model: amazon.titan-embed-text-v2:0
 
     # Redis Vector Store — stores embeddings for semantic cache
     vectorstore:
