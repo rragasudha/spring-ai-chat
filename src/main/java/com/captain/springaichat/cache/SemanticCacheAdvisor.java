@@ -54,6 +54,7 @@ public class SemanticCacheAdvisor implements CallAdvisor {
                         .similarityThreshold(similarityThreshold)
                         .build()
         );
+        System.out.println("=== CACHE DEBUG === query: " + userText + " | hits: " + hits.size() + " | threshold: " + similarityThreshold);
 
         if (!hits.isEmpty()) {
             String cachedAnswer = (String) hits.getFirst().getMetadata().get(CACHE_ANSWER_KEY);
