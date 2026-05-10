@@ -45,7 +45,6 @@ public class SemanticCacheAdvisor implements CallAdvisor {
 
     @Override
     public ChatClientResponse adviseCall(ChatClientRequest request, CallAdvisorChain chain) {
-        System.out.println("=== CACHE ADVISOR ENTERED ===");
         String userText = extractUserText(request.prompt());
 
         List<Document> hits = vectorStore.similaritySearch(
@@ -59,8 +58,6 @@ public class SemanticCacheAdvisor implements CallAdvisor {
         System.out.println("=== CACHE DEBUG === query: " + userText + " | hits: " + hits.size() + " | score: " + scoreInfo + " | threshold: " + similarityThreshold);
 
         if (!hits.isEmpty()) {
-            Document hit = hits.getFirst();
-            System.out.println("=== CACHE DOC === id: " + hit.getId() + " | text: " + hit.getText() + " | metadata: " + hit.getMetadata());
             String cachedAnswer = (String) hits.getFirst().getMetadata().get(CACHE_ANSWER_KEY);
             if (cachedAnswer != null) {
                 ChatResponse cached = new ChatResponse(List.of(
