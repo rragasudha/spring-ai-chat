@@ -53,7 +53,7 @@ spring:
     vectorstore:
       type: redis
       redis:
-        index: semantic-cache-idx
+        index-name: semantic-cache-idx
         prefix: "cache:"
         initialize-schema: true   # Creates HNSW index on startup if not exists
 
