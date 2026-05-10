@@ -45,6 +45,7 @@ public class SemanticCacheAdvisor implements CallAdvisor {
 
     @Override
     public ChatClientResponse adviseCall(ChatClientRequest request, CallAdvisorChain chain) {
+        System.out.println("=== CACHE ADVISOR ENTERED ===");
         String userText = extractUserText(request.prompt());
 
         List<Document> hits = vectorStore.similaritySearch(
